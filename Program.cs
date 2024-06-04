@@ -1,7 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
-using System.Text;
+using System.Buffers;
 
 namespace MyBenchmarks
 {
@@ -9,64 +9,9 @@ namespace MyBenchmarks
     [RankColumn, MarkdownExporterAttribute.StackOverflow]
     public class Benchmark
     {
-        private static readonly string[] words =
-        [
-            "lorem",
-            "ipsum",
-            "dolor",
-            "sit",
-            "amet",
-            "consectetuer",
-            "adipiscing",
-            "elit",
-            "sed",
-            "diam",
-            "nonummy",
-            "nibh",
-            "euismod",
-            "tincidunt",
-            "ut",
-            "laoreet",
-            "dolore",
-            "magna",
-            "aliquam",
-            "erat"
-        ];
-
-        private static IEnumerable<string> LoremIpsum(
-            Random random,
-            int minWords,
-            int maxWords,
-            int minSentences,
-            int maxSentences,
-            int numLines)
-        {
-            var line = new StringBuilder();
-            for (var l = 0; l < numLines; l++)
-            {
-                line.Clear();
-                var numSentences = random.Next(maxSentences - minSentences) + minSentences + 1;
-                for (var s = 0; s < numSentences; s++)
-                {
-                    var numWords = random.Next(maxWords - minWords) + minWords + 1;
-                    line.Append(words[random.Next(words.Length)]);
-
-                    for (var w = 1; w < numWords; w++)
-                    {
-                        line.Append(" ");
-                        line.Append(words[random.Next(words.Length)]);
-                    }
-
-                    line.Append(". ");
-                }
-
-                yield return line.ToString();
-            }
-        }
-
         private string[]? _lines;
 
-        [Params(1000, 1_000_000)]
+        [Params(1, 100)]
         public int N;
 
         [Params("lorem", "lorem ipsum dolor sit amet consectetuer")]
@@ -75,7 +20,7 @@ namespace MyBenchmarks
         [GlobalSetup]
         public void GlobalSetup()
         {
-            _lines = LoremIpsum(new Random(), 6, 8, 2, 3, 1_000_000).ToArray();
+            _lines = BenchmarkHelpers.LoremIpsum(new Random(), 6, 8, 2, 3, 1_000).ToArray();
         }
 
         public static int CountOccurrencesSub(
